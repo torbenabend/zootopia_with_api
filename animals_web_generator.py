@@ -1,4 +1,6 @@
-import json
+import requests
+
+API_KEY = "reMh5Hjl5R7AimWBJgZ43G28tDn4Ac58KxaNkewy"
 
 
 ANIMAL_CHARACTERISTICS = {
@@ -13,10 +15,14 @@ ANIMAL_CHARACTERISTICS = {
 }
 
 
-def load_data(file_path):
-    """ Load a JSON file """
-    with open(file_path, "r", encoding="utf-8") as handle:
-        return json.load(handle)
+def get_animal_data():
+    """ Fetches data for an animal from the API Ninjas API. """
+    animal_name = 'fox'
+    api_url = 'https://api.api-ninjas.com/v1/animals?name={}'.format(animal_name)
+    response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
+    if response.status_code != requests.codes.ok:
+        print("Error:", response.status_code, response.text)
+    return response.json()
 
 
 def load_html_template(file_path):
@@ -95,7 +101,7 @@ def user_selection_skin_type(skin_types):
 
 def main():
     # LOAD DATA
-    animals_data = load_data("animals_data.json")
+    animals_data = get_animal_data()
     template_data = load_html_template("animals_template.html")
     # FILTER BY SKIN TYPE
     skin_types = get_skin_types(animals_data)
