@@ -17,7 +17,7 @@ ANIMAL_CHARACTERISTICS = {
 
 def get_animal_data():
     """ Fetches data for an animal from the API Ninjas API. """
-    animal_name = 'fox'
+    animal_name = input("Enter a name of an animal: ").lower()
     api_url = 'https://api.api-ninjas.com/v1/animals?name={}'.format(animal_name)
     response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
     if response.status_code != requests.codes.ok:
