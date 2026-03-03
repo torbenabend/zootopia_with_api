@@ -22,7 +22,7 @@ def get_animal_data():
     response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
     if response.status_code != requests.codes.ok:
         print("Error:", response.status_code, response.text)
-    return response.json()
+    return response.json(), animal_name
 
 
 def load_html_template(file_path):
@@ -101,17 +101,21 @@ def user_selection_skin_type(skin_types):
 
 def main():
     # LOAD DATA
-    animals_data = get_animal_data()
+    animals_data, searched_animal = get_animal_data()
     template_data = load_html_template("animals_template.html")
-    # FILTER BY SKIN TYPE
-    skin_types = get_skin_types(animals_data)
-    user_skin_type = user_selection_skin_type(skin_types)
-    animals_data_filtered = [
-        animal for animal in animals_data
-        if ANIMAL_CHARACTERISTICS["Skin type"](animal) == user_skin_type
-    ]
+    if animals_data:
+        # FILTER BY SKIN TYPE
+        skin_types = get_skin_types(animals_data)
+        user_skin_type = user_selection_skin_type(skin_types)
+        animals_data_filtered = [
+            animal for animal in animals_data
+            if ANIMAL_CHARACTERISTICS["Skin type"](animal) == user_skin_type
+        ]
+
+        animals_html = render_animal_html(animals_data_filtered)
+    else:
+        animals_html = f"<h2>The animal {searched_animal} doesn't exist.</h2>"
     # CREATE WEBPAGE
-    animals_html = render_animal_html(animals_data_filtered)
     animals_webpage = template_data.replace(
         "__REPLACE_ANIMALS_INFO__", animals_html
     )
