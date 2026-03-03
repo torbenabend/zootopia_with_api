@@ -1,7 +1,4 @@
-import requests
-
-API_KEY = "reMh5Hjl5R7AimWBJgZ43G28tDn4Ac58KxaNkewy"
-
+import data_fetcher
 
 ANIMAL_CHARACTERISTICS = {
     "Name": lambda d: d.get("name"),
@@ -18,15 +15,6 @@ ANIMAL_CHARACTERISTICS = {
 def get_animal_name_from_user():
     """ Prompt user to insert an animal name """
     return input("Enter a name of an animal: ").lower()
-
-
-def fetch_animal_data(animal_name):
-    """ Fetches data for an animal from the API Ninjas API. """
-    api_url = f"https://api.api-ninjas.com/v1/animals?name={animal_name}"
-    response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
-    if response.status_code != requests.codes.ok:
-        print("Error:", response.status_code, response.text)
-    return response.json()
 
 
 def load_html_template(file_path):
@@ -129,7 +117,7 @@ def render_error_html(animal_name):
 def main():
     # LOAD DATA
     animal_name = get_animal_name_from_user()
-    animals_data = fetch_animal_data(animal_name)
+    animals_data = data_fetcher.fetch_data(animal_name)
     template_data = load_html_template("animals_template.html")
     if animals_data:
         # FILTER BY SKIN TYPE
