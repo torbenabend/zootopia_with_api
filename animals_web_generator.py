@@ -15,14 +15,18 @@ ANIMAL_CHARACTERISTICS = {
 }
 
 
-def get_animal_data():
+def get_animal_name_from_user():
+    """ Prompt user to insert an animal name """
+    return input("Enter a name of an animal: ").lower()
+
+
+def fetch_animal_data(animal_name):
     """ Fetches data for an animal from the API Ninjas API. """
-    animal_name = input("Enter a name of an animal: ").lower()
-    api_url = 'https://api.api-ninjas.com/v1/animals?name={}'.format(animal_name)
+    api_url = f"https://api.api-ninjas.com/v1/animals?name={animal_name}"
     response = requests.get(api_url, headers={'X-Api-Key': API_KEY})
     if response.status_code != requests.codes.ok:
         print("Error:", response.status_code, response.text)
-    return response.json(), animal_name
+    return response.json()
 
 
 def load_html_template(file_path):
@@ -31,10 +35,13 @@ def load_html_template(file_path):
         return handle.read()
 
 
-def create_webpage(html_input):
+def create_webpage(html_template, html_data):
     """ Create html file for webpage """
+    animals_webpage = html_template.replace(
+        "__REPLACE_ANIMALS_INFO__", html_data
+    )
     with open("animals.html", "w", encoding="utf-8") as html:
-        html.write(html_input)
+        html.write(animals_webpage)
 
 
 def render_animal_name(animal_info):
@@ -61,20 +68,26 @@ def render_animal_characteristic(characteristic, animal_info):
 
 def render_animal_html(animals):
     """ Render animal information in HTML syntax for each animal """
-    animals_html = ""
+    html_parts = []
     for animal in animals:
-        animals_html += '<li class="cards__item">'
-        animals_html += render_animal_name(animal)
-        animals_html += '<div class="card__text">'
-        animals_html += '<ul>'
-        animals_html += render_animal_characteristic("Scientific name", animal)
-        animals_html += render_animal_characteristic("Diet", animal)
-        animals_html += render_animal_characteristic("Location", animal)
-        animals_html += render_animal_characteristic("Type", animal)
-        animals_html += '</ul>'
-        animals_html += '</div>'
-        animals_html += "</li>"
-    return animals_html
+        card_html_parts = [
+                '<li class="cards__item">',
+                render_animal_name(animal),
+                '<div class="card__text">',
+                '<ul>',
+                render_animal_characteristic("Scientific name", animal),
+                render_animal_characteristic("Diet", animal),
+                render_animal_characteristic("Location", animal),
+                render_animal_characteristic("Type", animal),
+                '</ul>',
+                '</div>',
+                '</li>'
+        ]
+        for command in card_html_parts:
+            html_parts.append(command)
+    animal_html = "".join(html_parts)
+
+    return animal_html
 
 
 def get_skin_types(animals):
@@ -99,27 +112,33 @@ def user_selection_skin_type(skin_types):
         print("Invalid input! Please try again.\n")
 
 
+def filter_by_skin_type(animals_data):
+    skin_types = get_skin_types(animals_data)
+    user_skin_type = user_selection_skin_type(skin_types)
+    animals_data_filtered = [
+        animal for animal in animals_data
+        if ANIMAL_CHARACTERISTICS["Skin type"](animal) == user_skin_type
+    ]
+    return animals_data_filtered
+
+
+def render_error_html(animal_name):
+    return f"<h2>The animal {animal_name} doesn't exist.</h2>"
+
+
 def main():
     # LOAD DATA
-    animals_data, searched_animal = get_animal_data()
+    animal_name = get_animal_name_from_user()
+    animals_data = fetch_animal_data(animal_name)
     template_data = load_html_template("animals_template.html")
     if animals_data:
         # FILTER BY SKIN TYPE
-        skin_types = get_skin_types(animals_data)
-        user_skin_type = user_selection_skin_type(skin_types)
-        animals_data_filtered = [
-            animal for animal in animals_data
-            if ANIMAL_CHARACTERISTICS["Skin type"](animal) == user_skin_type
-        ]
-
+        animals_data_filtered = filter_by_skin_type(animals_data)
         animals_html = render_animal_html(animals_data_filtered)
     else:
-        animals_html = f"<h2>The animal {searched_animal} doesn't exist.</h2>"
+        animals_html = render_error_html(animal_name)
     # CREATE WEBPAGE
-    animals_webpage = template_data.replace(
-        "__REPLACE_ANIMALS_INFO__", animals_html
-    )
-    create_webpage(animals_webpage)
+    create_webpage(template_data, animals_html)
 
 
 if __name__ == "__main__":
